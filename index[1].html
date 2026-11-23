@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unloop – attention recovery app</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--ink:#14233a;--mute:#5f6e85;--line:#dde3ec;--navy:#1f3a5f;--blue:#4a6fa5;--sky:#dbe6f5;--amber:#e8a33d;--ok:#2f8f6b;--shell:#cfd6e2;box-sizing:border-box}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1829;--card:#18243a;--ink:#e8eef8;--mute:#93a3bd;--line:#2a3a56;--navy:#8fb0e3;--blue:#6f93cc;--sky:#223656;--shell:#070d18}}
+:root[data-theme="dark"]{--bg:#0f1829;--card:#18243a;--ink:#e8eef8;--mute:#93a3bd;--line:#2a3a56;--navy:#8fb0e3;--blue:#6f93cc;--sky:#223656;--shell:#070d18}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--shell);font-family:Inter,system-ui,sans-serif;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.phone{width:100%;height:100%;max-width:400px;max-height:820px;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
+@media(min-width:520px){.phone{border-radius:36px;border:8px solid var(--ink);height:92vh}}
+main{flex:1;overflow-y:auto;padding:20px 18px 12px}
+h1{font:700 24px Sora,sans-serif;letter-spacing:-.02em}
+h2{font:600 15px Inter;margin-bottom:10px}
+.sub{color:var(--mute);font-size:13px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.btn{width:100%;border:0;border-radius:12px;padding:14px;font:600 15px Inter;background:var(--navy);color:var(--bg);cursor:pointer;margin-top:12px}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;background:none;border:0;padding:12px 0 10px;font:500 12px Inter;color:var(--mute);cursor:pointer}
+nav button[aria-current="true"]{color:var(--navy);font-weight:600;box-shadow:inset 0 3px 0 var(--navy)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bar{height:8px;border-radius:8px;background:var(--sky);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:8px}
+.big{font:700 34px Sora;letter-spacing:-.03em}
+.feed{height:300px;overflow-y:auto;border-radius:12px;border:1px solid var(--line);background:var(--bg);scroll-snap-type:y proximity}
+.post{height:100px;padding:14px;border-bottom:1px solid var(--line);scroll-snap-align:start;font-size:14px}
+.post b{display:block;margin-bottom:4px}
+.post span{color:var(--mute);font-size:12px}
+.over{position:absolute;inset:0;background:rgba(10,20,36,.93);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;z-index:5}
+.over.on{display:flex}
+.breath{width:140px;height:140px;border-radius:50%;border:3px solid var(--amber);margin:26px 0;display:flex;align-items:center;justify-content:center;font:600 15px Sora;animation:br 8s ease-in-out infinite}
+@keyframes br{0%,100%{transform:scale(.7);background:rgba(232,163,61,.05)}50%{transform:scale(1.1);background:rgba(232,163,61,.28)}}
+@media(prefers-reduced-motion:reduce){.breath{animation:none}}
+.over .btn{background:#fff;color:#14233a;max-width:280px}.over .btn.alt{background:transparent;color:#fff;border-color:#ffffff55}
+.pill{display:inline-block;padding:4px 10px;border-radius:20px;background:var(--sky);font-size:12px;font-weight:600;color:var(--navy)}
+input[type=range]{width:100%;accent-color:var(--blue);margin-top:8px}
+.sw{appearance:none;width:44px;height:26px;border-radius:26px;background:var(--line);position:relative;cursor:pointer;border:0;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.15s}
+.sw[aria-checked="true"]{background:var(--ok)}.sw[aria-checked="true"]::after{left:21px}
+.wk{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:10px}
+.wk div{flex:1;text-align:center;font-size:11px;color:var(--mute)}
+.wk i{display:block;background:var(--blue);border-radius:6px 6px 0 0;margin-bottom:4px}
+.timer{font:700 56px Sora;letter-spacing:-.04em;text-align:center;margin:18px 0 4px}
+.seg{display:flex;gap:8px;margin-top:12px}.seg button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:500 14px Inter;cursor:pointer}.seg button[aria-pressed="true"]{border-color:var(--navy);background:var(--sky);font-weight:600}
+</style></head>
+<body>
+<div class="phone" id="phone">
+<main id="main"></main>
+<nav id="nav"></nav>
+<div class="over" id="over" role="dialog" aria-modal="true" aria-labelledby="ot">
+  <p class="pill" style="background:#ffffff22;color:#fff" id="ocount"></p>
+  <div class="breath" id="breath">Breathe in</div>
+  <h1 id="ot" style="font-size:22px">Pause. You’ve been scrolling a while.</h1>
+  <p class="sub" style="color:#c3cfe3;margin:8px 0 18px">Your attention needs a short reset. Take one slow breath cycle.</p>
+  <button class="btn" id="back">Back to focus</button>
+  <button class="btn alt" id="cont" disabled>Keep scrolling (wait 8s)</button>
+</div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const DEF={limit:180,thr:12,streak:3,interv:4,focusMin:95,apps:{"Instagram Reels":true,"YouTube Shorts":true,"X (Twitter)":true,"Reddit":false},lastDay:""};
+let S=JSON.parse(JSON.stringify(DEF));
+try{const r=localStorage.getItem("unloop");if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem("unloop",JSON.stringify(S))}catch(e){}};
+const usage=[["Instagram Reels",62],["YouTube Shorts",48],["X (Twitter)",34],["Reddit",21]];
+const total=usage.reduce((a,b)=>a+b[1],0);
+const tabs=[["home","Today"],["scroll","Try blocker"],["focus","Focus"],["insights","Streaks"],["settings","Settings"]];
+let tab="home",timer=null,fb={on:false,left:0,len:0,run:false};
+function nav(){$("#nav").innerHTML=tabs.map(t=>`<button data-t="${t[0]}" aria-current="${t[0]===tab}">${t[1]}</button>`).join("");
+ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()})}
+function ring(p){const r=54,c=2*Math.PI*r,o=c*(1-Math.min(p,1));
+ return `<svg viewBox="0 0 140 140" width="140" height="140" role="img" aria-label="${Math.round(p*100)}% of daily limit used"><circle cx="70" cy="70" r="${r}" fill="none" stroke="var(--sky)" stroke-width="12"/><circle cx="70" cy="70" r="${r}" fill="none" stroke="${p>.9?'var(--amber)':'var(--blue)'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${o}" transform="rotate(-90 70 70)"/></svg>`}
+const hm=m=>Math.floor(m/60)+"h "+String(m%60).padStart(2,"0")+"m";
+function render(){clearInterval(timer);nav();const m=$("#main");
+ if(tab==="home"){
+  m.innerHTML=`<h1>Good to see you.</h1><p class="sub">Short-form feeds today, across your phone.</p>
+  <div class="card row"><div style="position:relative">${ring(total/S.limit)}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="big" style="font-size:22px">${hm(total)}</div><div class="sub" style="margin:0">of ${hm(S.limit)}</div></div></div>
+  <div style="flex:1"><div class="pill">${S.streak}-day streak</div><p class="sub" style="margin-top:10px">${S.interv} scroll pauses this week. ${total>S.limit*.7?"You’re close to today’s limit.":"You’re within your limit."}</p></div></div>
+  <div class="card"><h2>Where the time went</h2>${usage.map(u=>`<div style="margin-bottom:12px"><div class="row" style="font-size:14px"><span>${u[0]}</span><span class="sub" style="margin:0">${u[1]} min</span></div><div class="bar"><i style="width:${u[1]/70*100}%"></i></div></div>`).join("")}</div>
+  <button class="btn" onclick="tab='focus';render()">Start a focus block</button>`}
+ if(tab==="scroll"){
+  const posts=Array.from({length:60},(_,i)=>`<div class="post"><b>${["Breaking update you might have missed","Everyone is talking about this","Another thread worth reading","This changes everything, apparently"][i%4]}</b>Post #${i+1}<br><span>${(i*7)%50+2}k reactions</span></div>`).join("");
+  m.innerHTML=`<h1>Try the blocker</h1><p class="sub">A sample feed. Scroll it: Unloop counts posts and steps in after ${S.thr}.</p>
+  <div class="card"><div class="row"><span class="pill" id="cnt">0 / ${S.thr} posts</span><span class="sub" style="margin:0">Threshold set in Settings</span></div>
+  <div class="bar"><i id="pb" style="width:0"></i></div><div class="feed" id="feed" style="margin-top:12px" tabindex="0" aria-label="Sample feed">${posts}</div></div>
+  <p class="sub" style="margin-top:12px">On a real phone, Android’s UsageStatsManager and iOS Screen Time shields detect this inside other apps. Here it runs on a mock feed.</p>`;
+  const f=$("#feed");let hit=false;
+  f.onscroll=()=>{const n=Math.floor(f.scrollTop/100);$("#cnt").textContent=Math.min(n,S.thr)+" / "+S.thr+" posts";$("#pb").style.width=Math.min(n/S.thr,1)*100+"%";
+   if(n>=S.thr&&!hit){hit=true;intervene(n)}}}
+ if(tab==="focus"){
+  const idle=!fb.run;
+  m.innerHTML=`<h1>Focus block</h1><p class="sub">Blocks your listed apps until the timer ends.</p>
+  <div class="card"><div class="timer" id="tm">${idle?String(fb.len||25).padStart(2,"0")+":00":""}</div>
+  <p class="sub" style="text-align:center">${idle?"Pick a length":"Shield on. Short-form apps are blocked."}</p>
+  ${idle?`<div class="seg" id="seg">${[1,25,45].map(v=>`<button aria-pressed="${(fb.len||25)===v}" data-v="${v}">${v===1?"1 min demo":v+" min"}</button>`).join("")}</div>`:""}
+  <button class="btn" id="go">${idle?"Start focus":"End early"}</button></div>
+  <div class="card"><h2>Blocked during focus</h2><p class="sub">${Object.keys(S.apps).filter(k=>S.apps[k]).join(", ")||"No apps selected"}</p></div>`;
+  if(idle){document.querySelectorAll("#seg button").forEach(b=>b.onclick=()=>{fb.len=+b.dataset.v;render()});
+   $("#go").onclick=()=>{fb.run=true;fb.left=(fb.len||25)*60;fb.tot=fb.left;tick();render();loop()}}
+  else{loop();$("#go").onclick=()=>{fb.run=false;render()}}}
+ if(tab==="insights"){
+  const d=[3,5,2,6,4,7,S.interv],mx=7;
+  m.innerHTML=`<h1>Your progress</h1><p class="sub">Attention recovers with small, steady wins.</p>
+  <div class="card row" style="text-align:center"><div style="flex:1"><div class="big">${S.streak}</div><div class="sub">day streak</div></div><div style="flex:1"><div class="big">${S.focusMin}</div><div class="sub">focus minutes</div></div><div style="flex:1"><div class="big">${S.interv}</div><div class="sub">scroll pauses</div></div></div>
+  <div class="card"><h2>Scroll pauses this week</h2><div class="wk">${d.map((v,i)=>`<div><i style="height:${v/mx*70}px"></i>${"MTWTFSS"[i]}</div>`).join("")}</div></div>
+  <div class="card"><h2>Weekly check-in</h2><p class="sub">Rate your attention, sleep and study output (1–5). Used in the pilot study.</p>
+  ${["Attention","Sleep","Study output"].map(x=>`<div class="row" style="margin-top:12px;font-size:14px"><span>${x}</span><span class="seg" style="margin:0;gap:4px">${[1,2,3,4,5].map(n=>`<button style="padding:6px 9px" aria-pressed="false" onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));this.setAttribute('aria-pressed','true')">${n}</button>`).join("")}</span></div>`).join("")}</div>`}
+ if(tab==="settings"){
+  m.innerHTML=`<h1>Settings</h1>
+  <div class="card"><div class="row"><h2 style="margin:0">Daily short-form limit</h2><span class="pill" id="lv">${hm(S.limit)}</span></div><input type="range" min="30" max="360" step="15" value="${S.limit}" id="lim" aria-label="Daily limit"></div>
+  <div class="card"><div class="row"><h2 style="margin:0">Pause after</h2><span class="pill" id="tv">${S.thr} posts</span></div><input type="range" min="5" max="40" value="${S.thr}" id="thr" aria-label="Scroll threshold"></div>
+  <div class="card"><h2>Apps to watch</h2>${Object.keys(S.apps).map(k=>`<div class="row" style="padding:8px 0;font-size:14px"><span>${k}</span><button class="sw" role="switch" aria-checked="${S.apps[k]}" aria-label="${k}" data-k="${k}"></button></div>`).join("")}</div>
+  <button class="btn alt" id="th">Switch light/dark</button><button class="btn alt" id="rs">Reset demo data</button>`;
+  $("#lim").oninput=e=>{S.limit=+e.target.value;$("#lv").textContent=hm(S.limit);save()};
+  $("#thr").oninput=e=>{S.thr=+e.target.value;$("#tv").textContent=S.thr+" posts";save()};
+  document.querySelectorAll(".sw").forEach(b=>b.onclick=()=>{S.apps[b.dataset.k]=!S.apps[b.dataset.k];b.setAttribute("aria-checked",S.apps[b.dataset.k]);save()});
+  $("#th").onclick=()=>{const d=document.documentElement,dk=getComputedStyle(d).getPropertyValue("--bg").trim()==="#0f1829";d.dataset.theme=dk?"light":"dark"};
+  $("#rs").onclick=()=>{S=JSON.parse(JSON.stringify(DEF));save();render()}}}
+function tick(){const t=$("#tm");if(t){const mm=Math.floor(fb.left/60),ss=fb.left%60;t.textContent=String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0")}}
+function loop(){tick();timer=setInterval(()=>{fb.left--;tick();if(fb.left<=0){clearInterval(timer);fb.run=false;S.streak++;S.focusMin+=Math.round(fb.tot/60);save();alert("Focus block complete. Streak: "+S.streak+" days.");render()}},1000)}
+let ot=null;
+function intervene(n){S.interv++;save();$("#ocount").textContent=n+" posts in a row";$("#over").classList.add("on");const c=$("#cont");let s=8;c.disabled=true;c.textContent="Keep scrolling (wait 8s)";
+ clearInterval(ot);ot=setInterval(()=>{s--;if(s<=0){clearInterval(ot);c.disabled=false;c.textContent="Keep scrolling for 5 more min"}else c.textContent="Keep scrolling (wait "+s+"s)"},1000);}
+$("#back").onclick=()=>{clearInterval(ot);$("#over").classList.remove("on");tab="focus";render()};
+$("#cont").onclick=()=>{$("#over").classList.remove("on");const f=$("#feed");if(f){f.scrollTop=0}};
+let b=0;setInterval(()=>{const e=$("#breath");if(e&&$("#over").classList.contains("on")){b++;e.textContent=(b%8<4)?"Breathe in":"Breathe out"}},1000);
+render();
+</script></body></html>
